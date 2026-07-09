@@ -5,7 +5,6 @@ import { useState } from 'react';
 import Modal from '../../common/Modal/Modal';
 import Input from '../../common/Input/Input';
 import Button from '../../common/Button/Button';
-import { useAuth } from '../../../context/AuthContext';
 import './SignInModal.scss';
 
 interface SignInModalProps {
@@ -14,12 +13,11 @@ interface SignInModalProps {
 }
 
 export const SignInModal = ({ isOpen, onClose }: SignInModalProps) => {
-  const { signIn } = useAuth(); // Keeping the hook reference so React doesn't complain
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email.trim()) {
@@ -27,27 +25,15 @@ export const SignInModal = ({ isOpen, onClose }: SignInModalProps) => {
       return;
     }
 
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setError('Please enter a valid email address');
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
-    // 🚀 FULL BYPASS: Completely skip the broken database call
-    try {
-      // We safely call your context state directly without hitting a real server
-      await signIn(email); 
-    } catch (err) {
-      // Catch-all to guarantee you proceed even if context throws errors
-      console.log("Context bypassed");
-    }
-
-    setLoading(false);
-    handleClose(); // Close the login overlay modal window
+    // 🚀 ULTRA BYPASS: Don't talk to any context or backend. 
+    // Just force the modal window to shut immediately.
+    setTimeout(() => {
+      setLoading(false);
+      onClose(); 
+    }, 100);
   };
 
   const handleClose = () => {
@@ -58,11 +44,11 @@ export const SignInModal = ({ isOpen, onClose }: SignInModalProps) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Sign In (Sandbox Mode)">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Sign In (Force Sandbox Mode)">
       <div className="sign-in-modal">
         <form onSubmit={handleSubmit} className="sign-in-modal__form">
-          <p className="sign-in-modal__description" style={{ color: '#22c55e', fontWeight: 'bold' }}>
-            ✅ Direct Bypass Ready: Enter any email to launch dashboard instantly.
+          <p className="sign-in-modal__description" style={{ color: '#eab308', fontWeight: 'bold' }}>
+            ⚡ Force Close Active: Clicking the button will force entry past this window.
           </p>
 
           <Input
@@ -79,8 +65,6 @@ export const SignInModal = ({ isOpen, onClose }: SignInModalProps) => {
             autoFocus
           />
 
-          {error && <p className="sign-in-modal__error">{error}</p>}
-
           <div className="sign-in-modal__actions">
             <Button
               variant="secondary"
@@ -94,7 +78,7 @@ export const SignInModal = ({ isOpen, onClose }: SignInModalProps) => {
               variant="primary"
               disabled={loading || !email.trim()}
             >
-              {loading ? 'Entering...' : 'Instant Developer Login 🚀'}
+              {loading ? 'Bypassing...' : 'Force Open Dashboard 🚀'}
             </Button>
           </div>
         </form>
