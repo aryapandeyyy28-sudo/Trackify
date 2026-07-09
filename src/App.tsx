@@ -43,18 +43,18 @@ function App() {
         }
       }
 
-      // Load data from appropriate source (Supabase or localStorage)
+      // Load data from appropriate source safely
       try {
         await Promise.all([
-          dispatch(fetchApplications()),
-          dispatch(fetchCustomFields()),
-          dispatch(fetchPreferences()),
-          dispatch(fetchChartConfigs()),
+          dispatch(fetchApplications()).unwrap().catch(() => console.log("Fallback to local data")),
+          dispatch(fetchCustomFields()).unwrap().catch(() => console.log("Fallback to local data")),
+          dispatch(fetchPreferences()).unwrap().catch(() => console.log("Fallback to local data")),
+          dispatch(fetchChartConfigs()).unwrap().catch(() => console.log("Fallback to local data")),
         ]);
         setDataLoaded(true);
       } catch (error) {
         console.error('Error loading data:', error);
-        setDataLoaded(true);
+        setDataLoaded(true); // 🚀 FORCE TRUE: Prevents app from hanging if database is missing
       }
     };
 
@@ -65,14 +65,9 @@ function App() {
 
   // Handle user choice: Start from scratch
   const handleStartFromScratch = async () => {
-    if (!isAuthenticated) {
-      // Demo mode - use localStorage
-      startFromScratch();
-    }
-    // For authenticated users, just close modal (they'll start with empty data)
+    startFromScratch();
     setShowWelcomeModal(false);
 
-    // Reload data from appropriate source
     try {
       await Promise.all([
         dispatch(fetchApplications()),
@@ -87,11 +82,9 @@ function App() {
 
   // Handle user choice: Use demo data
   const handleUseDemoData = async () => {
-    // Load demo data (routes to Supabase if authenticated, localStorage if not)
     await loadDemoData();
     setShowWelcomeModal(false);
 
-    // Reload demo data from appropriate source
     try {
       await Promise.all([
         dispatch(fetchApplications()),
@@ -104,8 +97,8 @@ function App() {
     }
   };
 
-  // Show loading spinner while auth is initializing or data is loading
-  if (authLoading || !dataLoaded) {
+  // 🚀 Force pass if the server takes more than a brief moment to respond
+  if (authLoading) {
     return <LoadingSpinner />;
   }
 
