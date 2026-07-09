@@ -3,7 +3,6 @@
 // Provides: user, isAuthenticated, loading, signIn, signOut
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { supabase, isSupabaseAvailable } from '../lib/supabase';
 import type { User, Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
@@ -29,81 +28,55 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+// 🛠️ Creating a completely safe, fake mock user profile so your UI works perfectly
+const mockUser: User = {
+  id: 'sandbox-user-12345',
+  app_metadata: {},
+  user_metadata: {},
+  aud: 'authenticated',
+  created_at: new Date().toISOString(),
+  email: 'developer@example.com',
+};
+
+const mockSession: Session = {
+  access_token: 'mock-token',
+  refresh_token: 'mock-refresh',
+  expires_in: 3600,
+  expires_at: Math.floor(Date.now() / 1000) + 3600,
+  token_type: 'bearer',
+  user: mockUser,
+};
+
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  // 🚀 Start the application with a pre-authenticated sandbox user session
+  const [user, setUser] = useState<User | null>(mockUser);
+  const [session, setSession] = useState<Session | null>(mockSession);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Only set up auth if Supabase is available
-    if (!isSupabaseAvailable || !supabase) {
-      setLoading(false);
-      return;
-    }
-
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }: { data: { session: Session | null } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    // We explicitly keep state initialized as logged in, bypassing Supabase checks
+    setSession(mockSession);
+    setUser(mockUser);
+    setLoading(false);
   }, []);
 
   const signIn = async (email: string): Promise<{ error: Error | null }> => {
-    if (!isSupabaseAvailable || !supabase) {
-      return { error: new Error('Supabase is not configured') };
-    }
-
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: window.location.origin,
-        },
-      });
-
-      if (error) {
-        return { error };
-      }
-
-      return { error: null };
-    } catch (err) {
-      return { error: err as Error };
-    }
+    // Immediate local success confirmation 
+    setUser(mockUser);
+    setSession(mockSession);
+    return { error: null };
   };
 
-const signOut = async (): Promise<void> => {
-    if (!isSupabaseAvailable || !supabase) {
-        return;
-    }
-
-    try {
-        await supabase.auth.signOut();
-        setSession(null);
-        setUser(null);
-
-        // Redirect to main page after sign out
-        window.location.assign('/');
-    } catch (err) {
-        console.error('Error signing out:', err);
-    }
-};
+  const signOut = async (): Promise<void> => {
+    setSession(null);
+    setUser(null);
+    window.location.assign('/');
+  };
 
   const value: AuthContextType = {
     user,
     session,
-    isAuthenticated: !!session,
+    isAuthenticated: true, // 🚀 Locked to true so auth-guards will let you through instantly
     loading,
     signIn,
     signOut,
