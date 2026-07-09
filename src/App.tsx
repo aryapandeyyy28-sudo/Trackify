@@ -120,12 +120,8 @@ function App() {
       
       <Suspense fallback={<LoadingSpinner />}>
         <Routes>
-          <Route
-            path="/"
-            element={
-              isAuthenticated ? <Navigate to="/dashboard" replace /> : <HomePage />
-            }
-          />
+          {/*  FORCE DASHBOARD: Load the dashboard directly on the main page */}
+          <Route path="/" element={<DashboardPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/custom-fields" element={<CustomFieldsPage />} />
           <Route path="/statistics" element={<StatisticsPage />} />
